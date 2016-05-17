@@ -134,6 +134,7 @@ class Variation<E> {
 
     public boolean matchTarget(LDUser user) {
       Object uValue = null;
+
       if (attribute.equals("key")) {
         if (user.getKey() != null) {
           uValue = user.getKey();
@@ -155,7 +156,7 @@ class Variation<E> {
         }
       }
       else if (attribute.equals("firstName")) {
-        if (user.getFirstName() != null ) {
+        if (user.getFirstName() != null) {
           uValue = user.getFirstName();
         }
       }
@@ -179,33 +180,30 @@ class Variation<E> {
           uValue = user.getAnonymous();
         }
       }
-      else { // Custom attribute
+
+      // Always check custom attributes in case an "interpreted" attribute was added there instead
+      if (uValue == null) {
         JsonElement custom = user.getCustom(attribute);
 
         if (custom != null) {
           if (custom.isJsonArray()) {
             JsonArray array = custom.getAsJsonArray();
-            for (JsonElement elt: array) {
-              if (! elt.isJsonPrimitive()) {
+            for (JsonElement elt : array) {
+              if (!elt.isJsonPrimitive()) {
                 logger.error("Invalid custom attribute value in user object: " + elt);
                 return false;
-              }
-              else if (values.contains(elt.getAsJsonPrimitive())) {
+              } else if (values.contains(elt.getAsJsonPrimitive())) {
                 return true;
               }
             }
-            return false;
-          }
-          else if (custom.isJsonPrimitive()) {
+          } else if (custom.isJsonPrimitive()) {
             return values.contains(custom.getAsJsonPrimitive());
           }
+          return false;
         }
-        return false;
       }
-      if (uValue == null) {
-        return false;
-      }
-      return values.contains((uValue));
+
+      return uValue != null && values.contains((uValue));
     }
   }
 }

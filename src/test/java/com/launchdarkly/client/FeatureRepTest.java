@@ -28,12 +28,15 @@ public class FeatureRepTest {
 
   private final Variation.TargetRule targetAnonymousOn = new Variation.TargetRule("anonymous", Collections.singletonList(new JsonPrimitive(true)));
 
+  private final Variation.TargetRule targetEmailOn = new Variation.TargetRule("email", Collections.singletonList(new JsonPrimitive("test@test.com")));
+
   private final Variation<Boolean> trueVariation = new Variation.Builder<>(true, 80)
       .target(targetUserOn)
       .target(targetGroupOn)
       .target(targetAnonymousOn)
       .target(targetLikesCatsOn)
       .target(targetFavoriteNumberOn)
+      .target(targetEmailOn)
       .build();
 
   private final Variation<Boolean> falseVariation = new Variation.Builder<>(false, 20)
@@ -41,6 +44,16 @@ public class FeatureRepTest {
       .target(targetGroupOff)
       .target(targetFavoriteNumberOff)
       .target(targetLikesDogsOff)
+      .build();
+
+  private final Variation<Boolean> emailOnlyVariation = new Variation.Builder<>(true, 0)
+      .target(targetEmailOn)
+      .build();
+
+  private final FeatureRep<Boolean> emailRuleFlag = new FeatureRep.Builder<Boolean>("Email rule flag", "email.rule.flag")
+      .on(true)
+      .salt("feefifofum")
+      .variation(emailOnlyVariation)
       .build();
 
   private final FeatureRep<Boolean> simpleFlag = new FeatureRep.Builder<Boolean>("Sample flag", "sample.flag")
@@ -199,6 +212,17 @@ public class FeatureRepTest {
 
     Boolean b = simpleFlag.evaluate(user);
     assertEquals(true, b);
+  }
+
+  @Test
+  public void testInterpretedAttributeEvaluatesInCustom() {
+    LDUser customEmailSetUser = new LDUser.Builder("randomOtherUser@test.com").custom("email", "test@test.com").build();
+    Boolean b = emailRuleFlag.evaluate(customEmailSetUser);
+    assertEquals(true, b);
+
+    LDUser interpretedEmailSetUser = new LDUser.Builder("randomOtherUser@test.com").email("test@test.com").build();
+    Boolean b2 = emailRuleFlag.evaluate(interpretedEmailSetUser);
+    assertEquals(true, b2);
   }
 
 }
